@@ -24,6 +24,11 @@
       (with-links)
       (update :body json/parse-string true)))
 
+(defn find-release-by-tag [releases tag-str]
+  (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
+    (first (filter #(str/contains? (:tag_name %) tag-str) sorted-releases))))
+
+
 (defn headers [context]
   {"Authorization" (str "token " (:token context))})
 
@@ -57,12 +62,13 @@
   "Gets the latest commit. Returns nil when there is no release.
 
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
-  [context]
+  [context & [tag-prefix "v"]]
   (try
-    (parse-response
-     (curl/get
-      (format "%s/repos/%s/releases/latest" (:github/api-url context) (:repo context))
-      {:headers (headers context)}))
+    (let [releases (parse-response
+                     (curl/get
+                      (format "%s/repos/%s/releases" (:github/api-url context) (:repo context))
+                      {:headers (headers context)}))]
+      (find-release-by-tag (sort-releases releases) tag-prefix))
     (catch clojure.lang.ExceptionInfo ex
       (cond
         ;; No previous release created, return nil

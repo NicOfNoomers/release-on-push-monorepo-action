@@ -54,7 +54,7 @@
 
 ;; -- Version Bumping Logic  ---------------------------------------------------
 (defn fetch-related-data [context]
-  (let [latest-release (:body (github/fetch-latest-release context))]
+  (let [latest-release (:body (github/fetch-latest-release context :input/tag-prefix))]
     {:related-prs           (:body (github/fetch-related-prs context))
      :commit                (:body (github/fetch-commit context))
      :latest-release        latest-release
