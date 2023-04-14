@@ -25,6 +25,7 @@
       (update :body json/parse-string true)))
 
 (defn find-release-by-tag [releases tag-str]
+  (require '[clojure.string :as str])
   (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
     (first (filter #(str/contains? (:tag_name %) tag-str) sorted-releases))))
 
@@ -63,7 +64,6 @@
 
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
   [context & [tag-prefix "v"]]
-  (require '[clojure.string :as str])
   (try
     (let [releases (parse-response
                      (curl/get
