@@ -63,6 +63,7 @@
 
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
   [context & [tag-prefix "v"]]
+  (require '[clojure.string :as str])
   (try
     (let [releases (parse-response
                      (curl/get
