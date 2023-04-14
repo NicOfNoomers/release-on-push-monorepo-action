@@ -27,7 +27,7 @@
 (defn find-release-by-tag [releases tag-str]
   (require '[clojure.string :as str])
   (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
-    (first (filter #(str/contains? (:tag_name %) tag-str) sorted-releases))))
+    (first (filter #(contains? (:tag_name %) tag-str) sorted-releases))))
 
 
 (defn headers [context]
