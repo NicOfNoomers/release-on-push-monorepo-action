@@ -63,7 +63,7 @@
   "Gets the latest commit. Returns nil when there is no release.
 
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
-  [context & [tag-prefix "v"]]
+  [context & tag-prefix]
   (try
     (let [releases (parse-response
                      (curl/get
