@@ -69,7 +69,7 @@
                      (curl/get
                       (format "%s/repos/%s/releases" (:github/api-url context) (:repo context))
                       {:headers (headers context)}))]
-      (find-release-by-tag releases tag-prefix))
+      (find-release-by-tag releases (or tag-prefix "v")))
     (catch clojure.lang.ExceptionInfo ex
       (cond
         ;; No previous release created, return nil
