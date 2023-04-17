@@ -61,6 +61,23 @@
 ;; -- Github Releases API  -----------------------------------------------------
 (defn fetch-latest-release
   "Gets the latest commit. Returns nil when there is no release.
+  See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
+  [context]
+  (try
+    (parse-response
+     (curl/get
+      (format "%s/repos/%s/releases/latest" (:github/api-url context) (:repo context))
+      {:headers (headers context)}))
+    (catch clojure.lang.ExceptionInfo ex
+      (cond
+        ;; No previous release created, return nil
+        (= 404 (:status (ex-data ex)))
+        (println "No release found for project.")
+
+        :else (throw ex)))))
+
+(defn fetch-latest-release-custom
+  "Gets the latest commit. Returns nil when there is no release.
 
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
   [context & tag-prefix]
