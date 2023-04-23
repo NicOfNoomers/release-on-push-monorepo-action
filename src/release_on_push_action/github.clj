@@ -106,7 +106,7 @@
                                  (:repo context))
                      {:headers (:headers context)})]
       (when (= (:status response) 200)
-        (let [releases (-> (:body response) (json/read-str true))]
+        (let [releases (-> (:body response) (read-str true))]
           (find-release-by-tag releases (or tag-prefix "v")))))
     (catch Exception ex
       (if (= 404 (.getStatusLine (.getResponse ex)))
