@@ -1,7 +1,6 @@
 (ns release-on-push-action.github
   (:require [babashka.curl :as curl]
             [clojure.string :as str]
-            [clj-http.client :as client]
             [cheshire.core :as json]))
 
 ;; -- Generic HTTP Helpers  ----------------------------------------------------
@@ -101,14 +100,14 @@
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
   [context & [tag-prefix]]
   (try
-    (let [response (client/get
+    (let [response (curl/get
                      (str/format "%s/repos/%s/releases"
                                  (:api-url (:github context))
                                  (:repo context))
                      {:headers (:headers context)})]
-      (client/check-successful response)  ;; Raise an error for non-2xx status codes
-      (let [releases (-> response :body (json/read-str true))]
-        (find-release-by-tag releases (or tag-prefix "v"))))
+      (when (= (:status response) 200)
+        (let [releases (-> (:body response) (json/read-str true))]
+          (find-release-by-tag releases (or tag-prefix "v")))))
     (catch Exception ex
       (if (= 404 (.getStatusLine (.getResponse ex)))
         (println "No release found for project.")
