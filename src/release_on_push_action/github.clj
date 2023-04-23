@@ -120,6 +120,7 @@
   (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
     (first (filter #(re-find (re-pattern tag-str) (:tag_name %)) sorted-releases)))))
 
+
 ;; -- Github Commit API  -------------------------------------------------------
 (defn fetch-commit
   "See https://developer.github.com/v3/repos/commits/"
