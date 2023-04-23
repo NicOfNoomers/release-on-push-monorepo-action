@@ -1,6 +1,7 @@
 (ns release-on-push-action.github
   (:require [babashka.curl :as curl]
             [clojure.string :as str]
+            [clj-http.client :as client]
             [cheshire.core :as json]))
 
 ;; -- Generic HTTP Helpers  ----------------------------------------------------
@@ -24,10 +25,10 @@
       (with-links)
       (update :body json/parse-string true)))
 
-(defn find-release-by-tag [releases tag-str]
-  (require '[clojure.string :as str])
-  (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
-    (first (filter #(contains? (:tag_name %) tag-str) sorted-releases))))
+;; (defn find-release-by-tag [releases tag-str]
+;;   (require '[clojure.string :as str])
+;;   (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
+;;     (first (filter #(contains? (:tag_name %) tag-str) sorted-releases))))
 
 
 (defn headers [context]
@@ -76,24 +77,48 @@
 
         :else (throw ex)))))
 
+;; (defn fetch-latest-release-custom
+;;   "Gets the latest commit. Returns nil when there is no release.
+
+;;   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
+;;   [context & tag-prefix]
+;;   (try
+;;     (let [releases (parse-response
+;;                      (curl/get
+;;                       (format "%s/repos/%s/releases" (:github/api-url context) (:repo context))
+;;                       {:headers (headers context)}))]
+;;       (find-release-by-tag releases (or tag-prefix "v")))
+;;     (catch clojure.lang.ExceptionInfo ex
+;;       (cond
+;;         ;; No previous release created, return nil
+;;         (= 404 (:status (ex-data ex)))
+;;         (println "No release found for project.")
+
+;;         :else (throw ex)))))
+
 (defn fetch-latest-release-custom
   "Gets the latest commit. Returns nil when there is no release.
-
   See https://developer.github.com/v3/repos/releases/#get-the-latest-release"
-  [context & tag-prefix]
+  [context & [tag-prefix]]
   (try
-    (let [releases (parse-response
-                     (curl/get
-                      (format "%s/repos/%s/releases" (:github/api-url context) (:repo context))
-                      {:headers (headers context)}))]
-      (find-release-by-tag releases (or tag-prefix "v")))
-    (catch clojure.lang.ExceptionInfo ex
-      (cond
-        ;; No previous release created, return nil
-        (= 404 (:status (ex-data ex)))
+    (let [response (client/get
+                     (str/format "%s/repos/%s/releases"
+                                 (:api-url (:github context))
+                                 (:repo context))
+                     {:headers (:headers context)})]
+      (client/check-successful response)  ;; Raise an error for non-2xx status codes
+      (let [releases (-> response :body (json/read-str true))]
+        (find-release-by-tag releases (or tag-prefix "v"))))
+    (catch Exception ex
+      (if (= 404 (.getStatusLine (.getResponse ex)))
         (println "No release found for project.")
+        (throw ex)))))
 
-        :else (throw ex)))))
+(defn find-release-by-tag
+  "Finds the latest release with the given tag prefix in the list of releases."
+  [releases tag-str]
+  (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
+    (first (filter #(re-find (re-pattern tag-str) (:tag_name %)) sorted-releases)))))
 
 ;; -- Github Commit API  -------------------------------------------------------
 (defn fetch-commit
