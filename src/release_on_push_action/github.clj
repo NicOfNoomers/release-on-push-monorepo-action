@@ -101,7 +101,7 @@
   [context & [tag-prefix]]
   (try
     (let [response (curl/get
-                     (str/format "%s/repos/%s/releases"
+                     (format "%s/repos/%s/releases"
                                  (:api-url (:github context))
                                  (:repo context))
                      {:headers (:headers context)})]
