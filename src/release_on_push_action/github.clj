@@ -117,7 +117,7 @@
   "Finds the latest release with the given tag prefix in the list of releases."
   [releases tag-str]
   (let [sorted-releases (sort-by #(.compareTo (:tag_name %)) releases :desc)]
-    (first (filter #(re-find (re-pattern tag-str) (:tag_name %)) sorted-releases)))))
+    (first (filter #(re-find (re-pattern tag-str) (:tag_name %)) sorted-releases))))
 
 
 ;; -- Github Commit API  -------------------------------------------------------
